@@ -15,7 +15,8 @@ public class MessageViewer extends LinearLayout
 {
     //Enteros para indicar el tipo de mensaje
     //modificar/separar
-    static int PROPIO=0, NOPROPIO=1;
+    static int SELF=0;
+    static int OTHER=1;
 
     public MessageViewer(Context context)
     {
@@ -28,7 +29,7 @@ public class MessageViewer extends LinearLayout
         li.inflate(R.layout.message_box, this, true);
     }
 
-    public void setTexto(String txt)
+    public void setText(String txt)
     {
         TextView mensaje=(TextView) findViewById(R.id.MensajeTextoCentral);
         (mensaje).setText(txt);
@@ -40,21 +41,21 @@ public class MessageViewer extends LinearLayout
         }
     }
 
-    public void setHora(String txt)
+    public void setDate(String txt)
     {
         ((TextView) findViewById(R.id.MensajeHora)).setText(txt);
     }
 
-    public void setEnviado(int num)
+    public void sentMsg(int num)
     {
         int color;//Id del drawable para ponerle de fondo
 
-        if(num==PROPIO)
+        if(num==SELF)
         {
             SetLayoutNoneWeight(((TextView) findViewById(R.id.MensajeHuecoDerecha)));
             color= R.drawable.sent_message;
 
-        }else if(num==NOPROPIO)
+        }else if(num==OTHER)
         {
             SetLayoutNoneWeight(((TextView) findViewById(R.id.MensajeHuecoIzquierda)));
             color= R.drawable.received_message;
@@ -72,7 +73,7 @@ public class MessageViewer extends LinearLayout
         ((LinearLayout)findViewById(R.id.MensajeLinearLayout)).setBackgroundResource(color);
     }
 
-    public void setImagen(Bitmap imagen)
+    public void setImage(Bitmap imagen)
     {
         ImageView msgimg=((ImageView) findViewById(R.id.MensajeImagen));
 
