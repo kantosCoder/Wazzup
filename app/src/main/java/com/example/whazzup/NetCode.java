@@ -1,6 +1,5 @@
 package com.example.whazzup;
 import androidx.appcompat.app.AppCompatActivity;
-
 import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
@@ -13,7 +12,6 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -21,17 +19,19 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Calendar;
 
-//trabajar en lineas 51, 24, 118
+//trabajar en lineas 51, 24, 118, 214, 290 (changetitle), 244 (cerrar hilos),184(sin editar),392 obtener ip self de sergio
 //CLASE DE CONVERSACION
 public class NetCode extends AppCompatActivity {
 
     //pantalla de chat// clases de conexion //hector
     //HI, I'm coding right here xD
     //bateria de variables:
+    ServerSocket serverSocket;
     protected static String msgrole ="SELF";
     protected static String devicerole ="";
     private String ip= "";
     private String username ="";
+    private String servername = "";
     private String netport = "";
     private LinearLayout textlayout;
     private boolean goodtogo;
@@ -69,7 +69,7 @@ public class NetCode extends AppCompatActivity {
         }
     }
     //NETWORK
-    //obtencion de status de la conexion (si/no)
+    //si estamos conectados, activa el campo de texto a editar
     private void getStatus(boolean status)
     {
         goodtogo=status;
@@ -155,13 +155,79 @@ public class NetCode extends AppCompatActivity {
 
         }
     }
+    protected class ShowMessageInfo extends Thread//Añade a la interfaz un mensaje de información
+    {
+        private String msg;
+
+        ShowMessageInfo(String message) {       msg = message;      }
+
+        @Override
+        public void run()
+        {
+            NetCode.this.runOnUiThread(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    MessageViewer vista = new MessageViewer(NetCode.this);
+                    Calendar calendario = Calendar.getInstance();
+                    vista.setDate(""+(String.format("%02d", (calendario.get(Calendar.HOUR_OF_DAY)))+":"+(String.format("%02d", (calendario.get(Calendar.MINUTE))))));
+                    vista.setText(msg);
+                    //vista.setHora("");
+                    vista.sentMsg(-1);
+                    vista.setImage(null);
+                    messagePush(vista);
+                }
+            });
+
+        }
+    }
+    private class SocketMessage extends Thread
+    {
+        private boolean mostrar_mensaje_enviado;
+        private String msg;
+
+        SocketMessage(String message, boolean show_msg)
+        {
+            msg=message;
+            mostrar_mensaje_enviado=show_msg;
+        }
+
+        @Override
+        public void run()
+        {
+            try
+            {
+                dataOutputStream.writeUTF(msg);//Enviamos el mensaje
+                //dataOutputStream.close();
+                if(mostrar_mensaje_enviado)
+                {
+                    String[] trozos=msg.split("#");
+                    if(trozos.length>1)
+                    {
+                        switch (Integer.parseInt(trozos[0]))
+                        {
+                            case 3:
+                            {
+                                new newMessage(trozos[1]).start();//Añadimos el mensaje a la interfaz
+                            }break;
+                        }
+                    }
+                }
+            }catch (IOException e)
+            {
+                e.printStackTrace();
+                //message += "¡Algo fue mal! " + e.toString() + "\n";
+            }
+        }
+    }
     //HILOS DE EJECUCION
     //HILO DE ESCUCHA COMUN
     private class MessageRefresher extends Thread
     {
         public boolean executing;
         Socket socket;
-        private String line;
+        private String buffer;
 
 
         MessageRefresher(Socket s){socket=s;}
@@ -172,44 +238,59 @@ public class NetCode extends AppCompatActivity {
 
             while(executing)
             {
-                line="";
-                line=ObtenerCadena();//Obtenemos la cadena del buffer
-                if(line!="" && line.length()!=0)//Comprobamos que esa cadena tenga contenido
-                    ProcesarCadena();//Procesamos la cadena recibida
+                buffer="";
+                buffer=ObtenerCadena();//Obtenemos la cadena del buffer
+                if(buffer!="" && buffer.length()!=0)//Comprobamos que esa cadena tenga contenido
+                    ProcessMessage();//Procesamos la cadena recibida
             }
         }
 
-        private void ProcesarCadena()
-        {
-            String[] trozos=line.split(TipoMensaje.delimitador);//Dividimos la cadena para saber que tipo de mensaje es
-            if(trozos.length>1)
-            {
+        private void ProcessMessage() {
+            //procesar cadena, incluir metodos faltantes segun rol
+            String[] trozos = buffer.split("#");//Dividimos la cadena para saber que tipo de mensaje es
+            if (trozos.length > 1) {
                 //Log.d("Trozos", ""+trozos.length);
-                switch (Integer.parseInt(trozos[0]))
-                {
-                    case TipoMensaje.NombreUser://Si es el nombre de usuario notificamos al hilo de espera de conexion que ya tenemos el nombre de usuario
+                switch (Integer.parseInt(trozos[0])) {
+                    case 0://Obtenemos el nombre del servidor
                     {
-                        HiloEspera.UserName=trozos[1];
+                        servername = trozos[1];
                     }
                     break;
-
-                    case TipoMensaje.MensajeNormal://Si es un mensaje normal, creamos un hilo para añadirlo a la interfaz
+                    case 1://Si es el nombre de usuario notificamos al hilo de espera de conexion que ya tenemos el nombre de usuario
                     {
-                        new ShowMessageReceived(trozos[1]).start();
-                    }break;
-
-                    case TipoMensaje.EnvioImagen://Si es un fichero, añadimos un hilo que maneje la recepcion del mismo
+                        if (devicerole.equals("SERVER")) {
+                            NewClients.UserName = trozos[1];
+                        }
+                    }
+                    break;
+                    case 2://Obtenemos el nombre del servidor
                     {
-                        new ReceiveBitmapThread(Integer.parseInt(trozos[1])).run();
-                    }break;
-
-                    case TipoMensaje.Desconexion://Si el usuario se desconecta, mostrmoas en la pantalla que se ha desconectado y reinicimaos la conexión, para esperar nuevos usuarios
+                        if (devicerole.equals("CLIENT")) {
+                            ClientStart.respuesta = Integer.parseInt(trozos[1]);//Notificamos al hilo de conexion la respuesta del servidor
+                        }
+                    }
+                    break;
+                    case 3://Si es un mensaje normal, creamos un hilo para añadirlo a la interfaz
                     {
-                        new ShowMessageInfo("Se ha desconectado "+trozos[1]+" :(").run();
-                        ReiniciarConexion();
+                        new newMessage(trozos[1]).start();
+                    }
+                    break;
+                    case 4://Si el usuario se desconecta, mostrmoas en la pantalla que se ha desconectado y reinicimaos la conexión, para esperar nuevos usuarios
+                    {
+                        if (devicerole.equals("SERVER")) {
+                            new ShowMessageInfo("Se ha desconectado " + trozos[1] + " :(").run();//Añadimos el mensaje a la interfaz, que se ha desconectado
 
-                    }break;
+                            //Cerramos el hilo de escucha, así como los sockets y streams
+                            //CerrarHiloEscucha();
+                            //CloseSocketInputs();
+                        }
+                        if (devicerole.equals("CLIENT")) {
+                            new ShowMessageInfo("Se ha desconectado " + trozos[1] + " :(").run();
+                            //ReiniciarConexion();
+                        }
 
+                    }
+                    break;
                     default:
                         break;
                 }
@@ -248,27 +329,27 @@ public class NetCode extends AppCompatActivity {
         int respuesta;
         public void run()
         {
-            changeTitle("Esperando Servidor...");
+            //changeTitle("Esperando Servidor...");
             respuesta=-1;
             try
             {
                 new ShowMessageInfo("Creando el socket...").start();//Mostramos un mensaje para indicar que estamos creando el socket
-                socket = new Socket(mIp, Integer.parseInt(mPuerto));//Creamos el socket
+                socket = new Socket(ip, Integer.parseInt(netport));//Creamos el socket
 
 
-                new ShowMessageInfo("Conectando con el servidor: "+mIp+":"+mPuerto+"...").start();//Mostramos por la interfaz que nos hemos conectado al servidor
+                new ShowMessageInfo("Conectando con el servidor: "+ip+":"+netport+"...").start();//Mostramos por la interfaz que nos hemos conectado al servidor
 
-                (hearMessages=new GetMessagesThread(socket)).start();//Creamos el hilol de escucha de mensajes
+                (HiloEscucha=new MessageRefresher(socket)).start();//Creamos el hilol de escucha de mensajes
                 dataOutputStream= new DataOutputStream(socket.getOutputStream());//Iniciamos el dataoutputstream
 
-                while(ServerName.length()<1){}//Esperamos a que el servidor nos envie su nombre
+                while(servername.length()<1){}//Esperamos a que el servidor nos envie su nombre
 
                 //Añadimos un mensaje a la interfaz indicando que estamos pidiendo autorización en el servidor
-                new ShowMessageInfo("Pidiendo autorización para entrar al servidor: '"+ServerName+"'").start();
+                new ShowMessageInfo("Pidiendo autorización para entrar al servidor: '"+servername+"'").start();
 
                 //Le enviamos al servidor nuestro nombre, para que pueda aceptarnos o rechazarnos jejeje
-                SocketSendMessageThread sendNameUser;
-                sendNameUser=new SocketSendMessageThread(TipoMensaje.NombreUser+TipoMensaje.delimitador+mNombreUsuario, true);
+                SocketMessage sendNameUser;
+                sendNameUser=new SocketMessage("1#"+username, true);
                 sendNameUser.start();
 
                 while(respuesta==-1){}//Esperamos la respuesta
@@ -276,14 +357,14 @@ public class NetCode extends AppCompatActivity {
 
                 if(respuesta==1)
                 {//Si nos han aceptado, mostramos un mensaje afirmativo, en caso contrario, el mensaje será negativo :(
-                    changeTitle(ServerName);
-                    new ShowMessageInfo("Has entrado al servidor: '"+ServerName+"', ya puedes hablar todo lo que quieras jeje").start();
-                    setConnectionEstablislhed(true);
+                    //changeTitle(ServerName);
+                    new ShowMessageInfo("Has entrado al servidor: '"+servername+"', ya puedes hablar todo lo que quieras").start();
+                    getStatus(true);
                 }else
                 {
-                    changeTitle("RECHAZADO HIJOPUTA");
-                    setConnectionEstablislhed(false);
-                    new ShowMessageInfo("Te han denegado la entrada al servidor: '"+ServerName+"'").start();
+                    //changeTitle("RECHAZADO HIJOPUTA");
+                    getStatus(false);
+                    new ShowMessageInfo("Te han denegado la entrada al servidor: '"+servername+"'").start();
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -300,15 +381,15 @@ public class NetCode extends AppCompatActivity {
 
         public void run()
         {
-            changeTitle("Esperando Usuario...");
+            //changeTitle("Esperando Usuario...");
             esperando_nuevos_clientes=true;
             try
             {
                 //Abrimos el socket
-                serverSocket = new ServerSocket(Integer.parseInt(mPuerto));
+                serverSocket = new ServerSocket(Integer.parseInt(netport));
 
                 //Mostramos un mensaje para indicar que estamos esperando en la direccion ip y el puerto...
-                new ShowMessageInfo("Creado el servidor\n Dirección: "+getIpAddress()+"\nPuerto: "+serverSocket.getLocalPort()).start();
+               //ESPERAR INTENT SERGIO!!! OBTENER SELF IP new ShowMessageInfo("Creado el servidor\n Dirección: "+getIpAddress()+"\nPuerto: "+serverSocket.getLocalPort()).start();
 
 
                 //Bucle para dejar al servidor a la escucha de clientes
@@ -326,66 +407,31 @@ public class NetCode extends AppCompatActivity {
 
 
                     //Iniciamos el hilo para la escucha y procesado de mensajes
-                    (HiloEscucha=new GetMessagesThread(socket)).start();
+                    (HiloEscucha=new MessageRefresher(socket)).start();
 
                     //Creamos un mensaje en la interfaz indicando que hemos encontrado un nuevo usuario
                     new ShowMessageInfo("Se ha encontrado un nuevo usuario, esperando nombre de usuario...").start();
 
                     //Enviamos al usuario el nombre del servidor
-                    SocketSendMessageThread sendNameServer;
-                    sendNameServer=new SocketSendMessageThread(TipoMensaje.NombreServer+TipoMensaje.delimitador+mNombreUsuario, false);
+                    SocketMessage sendNameServer;
+                    sendNameServer=new SocketMessage("0#"+username, false);
                     sendNameServer.run();
 
                     UserName="";//Esperamos a que el usuario nos envie su nombre
                     while(UserName.length()<1){}
 
-                    changeTitle(UserName);//Ponemos el nombre de usuario como titulo
+                    //changeTitle(UserName);//Ponemos el nombre de usuario como titulo
 
-                    aceptar_conexion=-1;
-
-                    Server.this.runOnUiThread(new Runnable()
-                    {
-                        @Override
-                        public void run()
-                        {
-                            Crear_Dialogo_Aceptar_Usuario(UserName);
-                        }
-                    });
-
-                    //Esperamos que el usuario acepte la conexion
-                    while(aceptar_conexion==-1);
-
-
-                    if(aceptar_conexion==1)
-                    {
                         //Mostramos un mensaje indicando que hemos aceptado al usuario
                         new ShowMessageInfo("Has aceptado a '"+UserName+"', ya puedes hablar con él jeje").start();
 
                         //Notificamos al usuario que se ha aceptado la conexion
-                        SocketSendMessageThread enviarmensaje;
-                        enviarmensaje=new SocketSendMessageThread(TipoMensaje.RespuestaConexion+TipoMensaje.delimitador+"1", true);
+                        SocketMessage enviarmensaje;
+                        enviarmensaje=new SocketMessage("2#1", true);
                         enviarmensaje.run();
 
                         esperando_nuevos_clientes=false;
-                        setConnectionEstablislhed(true);
-                    }else
-                    {
-                        changeTitle(UserName+" rechazado");
-
-                        //Mostramos un mensaje indicando que hemos rechazado al usuario
-                        new ShowMessageInfo("Has rechazado a '"+UserName+"' :(\n Esperando nuevos usuarios...").start();
-
-                        //Notificamos al usuario que se ha rechazado la conexion
-                        SocketSendMessageThread enviarmensaje;
-                        enviarmensaje=new SocketSendMessageThread(TipoMensaje.RespuestaConexion+TipoMensaje.delimitador+"0", true);
-                        enviarmensaje.run();
-
-                        setConnectionEstablislhed(false);
-
-                        //Cerramos el hilo de escucha y los streams, porque cuando haya un nuevo usuario se volveran a crear
-                        CerrarHiloEscucha();
-                        SuperCloseSocketInputs();
-                    }
+                        getStatus(true);
                 }
             }
             catch (IOException e)
