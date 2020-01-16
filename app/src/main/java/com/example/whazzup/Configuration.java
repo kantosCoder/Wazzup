@@ -41,7 +41,7 @@ public class Configuration extends AppCompatActivity {
                 sendCliente.putExtra("ip", IpText.getText().toString());
                 sendCliente.putExtra("puerto",PuertoText.getText().toString());
                 sendCliente.putExtra("username",UserText.getText().toString());
-                sendCliente.putExtra("type","cliente");
+                sendCliente.putExtra("type","USER");
                 startActivity(sendCliente);
         }
     }
@@ -60,9 +60,10 @@ public class Configuration extends AppCompatActivity {
         }else{
             Intent sendServer = new Intent();
             sendServer.setClass(getApplicationContext(),NetCode.class);
+            sendServer.putExtra("ip", IpText.getText().toString()); // HAY QUE ENVIAR LA IP DE TODOS MODOS, CARGAR CON FUNCION
             sendServer.putExtra("puerto",PuertoText.getText().toString());
             sendServer.putExtra("username",UserText.getText().toString());
-            sendServer.putExtra("type","server");
+            sendServer.putExtra("type","SERVER");
             startActivity(sendServer);
         }
 

@@ -18,8 +18,9 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Calendar;
-
+//!\\NETCODE STATUS NOTES
 //trabajar en lineas 51, 24, 118, 214, 290 (changetitle), 244 (cerrar hilos),184(sin editar),392 obtener ip self de sergio
+//
 //CLASE DE CONVERSACION
 public class NetCode extends AppCompatActivity {
 
@@ -58,6 +59,13 @@ public class NetCode extends AppCompatActivity {
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         setContentView(R.layout.activity_net_code);
         //OBTENCION DE VARIABLES PUTEXTRA (metodo de set.devicerole) <-muy necesario
+        //tipo de rol:
+        devicerole = getIntent().getStringExtra("type");
+        //putextra
+            ip = getIntent().getStringExtra("ip");
+            netport = getIntent().getStringExtra("puerto");
+            username = getIntent().getStringExtra("username");
+        //putextra de cliente
         //inicializacion de campos
         editmessage = findViewById(R.id.EditTextMensaje);
         //inicializacion de cliente/servidor
@@ -66,6 +74,7 @@ public class NetCode extends AppCompatActivity {
             (ClientStart = new ClientStartup()).start();//Abrimos el hilo para conectarnos al servidor
         }
         if(devicerole.equals("SERVER")){
+            serverSocket = null;
             (NewClients=new ClientAwaitThread()).start();
         }
     }
