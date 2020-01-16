@@ -42,6 +42,7 @@ public class Configuration extends AppCompatActivity {
                 sendCliente.putExtra("puerto",PuertoText.getText().toString());
                 sendCliente.putExtra("username",UserText.getText().toString());
                 sendCliente.putExtra("type","cliente");
+                startActivity(sendCliente);
         }
     }
     public void EnviarServidor(View vista){
@@ -62,6 +63,7 @@ public class Configuration extends AppCompatActivity {
             sendServer.putExtra("puerto",PuertoText.getText().toString());
             sendServer.putExtra("username",UserText.getText().toString());
             sendServer.putExtra("type","server");
+            startActivity(sendServer);
         }
 
     }

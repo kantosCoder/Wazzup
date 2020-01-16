@@ -35,7 +35,7 @@ public class NetCode extends AppCompatActivity {
     private String netport = "";
     private LinearLayout textlayout;
     private boolean goodtogo;
-    private LinearLayout linearLayoutMensajes;
+    private LinearLayout linearlayoutmessage;
     private Calendar date;
     private Socket socket;
     private EditText editmessage; //<-definir en oncreate
@@ -57,8 +57,9 @@ public class NetCode extends AppCompatActivity {
         //app solo en vertical
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         setContentView(R.layout.activity_net_code);
-        //OBTENCION DE VARIABLES PUTEXTRA (metodo de set.devicerole)
+        //OBTENCION DE VARIABLES PUTEXTRA (metodo de set.devicerole) <-muy necesario
         //inicializacion de campos
+        editmessage = findViewById(R.id.EditTextMensaje);
         //inicializacion de cliente/servidor
         if(devicerole.equals("USER")){
             getStatus(false);
@@ -109,6 +110,20 @@ public class NetCode extends AppCompatActivity {
         }
     }
     //LAYOUT
+    //introduce los mensajes
+    public void putMessage(View v)
+    {
+        if(goodtogo)
+        {
+            String msg=editmessage.getText().toString();//Obtenemos la cadena
+
+            if(msg!="" && msg.length()>0)//Comprobamos que la cadena no sea vacia
+            {
+                new SocketMessage("3#"+msg, true).start();//Creamos un hilo para el envio del nuevo mensaje
+                editmessage.setText("");
+            }
+        }
+    }
     //desplaza los mensajes
     private void messagePush(MessageViewer v)
     {
