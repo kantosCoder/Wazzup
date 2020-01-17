@@ -15,7 +15,9 @@ import com.google.android.material.snackbar.Snackbar;
 
 public class Configuration extends AppCompatActivity {
     //punto de entrada principal// pantalla configuracion // sergio
-
+º
+    //sergio mamon declara las variables al comienzo de la claaase
+    private String ipAddress ="";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -27,7 +29,8 @@ public class Configuration extends AppCompatActivity {
 
         WifiManager wifiMgr = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
         WifiInfo wifiInfo = wifiMgr.getConnectionInfo();
-        String ipAddress = Formatter.formatIpAddress(wifiInfo.getIpAddress());
+        //lo inicializas en el oncreate
+        ipAddress = Formatter.formatIpAddress(wifiInfo.getIpAddress());
         IpText.setHint(ipAddress);
 
     }
@@ -61,7 +64,7 @@ public class Configuration extends AppCompatActivity {
 
         WifiManager wifiMgr = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
         WifiInfo wifiInfo = wifiMgr.getConnectionInfo();
-        String ipAddress = Formatter.formatIpAddress(wifiInfo.getIpAddress());
+        //y no hace falta que lo vuelvas a inicializar XDDD simplemente pasa el valor
 
         if(PuertoText.getText().toString().isEmpty()|| UserText.getText().toString().isEmpty()){
             Snackbar.make(vista, "Rellena los campos", Snackbar.LENGTH_LONG)
