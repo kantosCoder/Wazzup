@@ -19,6 +19,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Calendar;
 //!\\NETCODE STATUS NOTES
+//si el cliente no encuentra ek server, explota
 //trabajar en lineas 51, 24, 118, 214, 290 (changetitle), 244 (cerrar hilos),184(sin editar),392 obtener ip self de sergio
 //
 //CLASE DE CONVERSACION
