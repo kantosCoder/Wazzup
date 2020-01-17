@@ -3,9 +3,13 @@ package com.example.whazzup;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.text.format.Formatter;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.TextView;
 
 import com.google.android.material.snackbar.Snackbar;
 
@@ -20,6 +24,11 @@ public class Configuration extends AppCompatActivity {
         EditText IpText =(EditText)findViewById(R.id.DireccionIpText);
         EditText PuertoText = (EditText)findViewById(R.id.PuertoText);
         EditText UserText = (EditText)findViewById(R.id.usuarioText);
+
+        WifiManager wifiMgr = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
+        WifiInfo wifiInfo = wifiMgr.getConnectionInfo();
+        String ipAddress = Formatter.formatIpAddress(wifiInfo.getIpAddress());
+        IpText.setHint(ipAddress);
 
     }
     public void EnviarCliente(View vista){
@@ -49,6 +58,11 @@ public class Configuration extends AppCompatActivity {
         EditText IpText =(EditText)findViewById(R.id.DireccionIpText);
         EditText PuertoText = (EditText)findViewById(R.id.PuertoText);
         EditText UserText = (EditText)findViewById(R.id.usuarioText);
+
+        WifiManager wifiMgr = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
+        WifiInfo wifiInfo = wifiMgr.getConnectionInfo();
+        String ipAddress = Formatter.formatIpAddress(wifiInfo.getIpAddress());
+
         if(PuertoText.getText().toString().isEmpty()|| UserText.getText().toString().isEmpty()){
             Snackbar.make(vista, "Rellena los campos", Snackbar.LENGTH_LONG)
                     .setAction("<--", new View.OnClickListener() {
@@ -60,7 +74,7 @@ public class Configuration extends AppCompatActivity {
         }else{
             Intent sendServer = new Intent();
             sendServer.setClass(getApplicationContext(),NetCode.class);
-            sendServer.putExtra("ip", IpText.getText().toString()); // HAY QUE ENVIAR LA IP DE TODOS MODOS, CARGAR CON FUNCION
+            sendServer.putExtra("ip",ipAddress); // HAY QUE ENVIAR LA IP DE TODOS MODOS, CARGAR CON FUNCION
             sendServer.putExtra("puerto",PuertoText.getText().toString());
             sendServer.putExtra("username",UserText.getText().toString());
             sendServer.putExtra("type","SERVER");
