@@ -69,6 +69,7 @@ public class NetCode extends AppCompatActivity {
         //putextra de cliente
         //inicializacion de campos
         editmessage = findViewById(R.id.EditTextMensaje);
+        textlayout = (LinearLayout) findViewById(R.id.ListaMensajes);
         //inicializacion de cliente/servidor
         if(devicerole.equals("USER")){
             getStatus(false);
@@ -138,7 +139,7 @@ public class NetCode extends AppCompatActivity {
     private void messagePush(MessageViewer v)
     {
         //añade nuevo mensaje
-        this.textlayout.addView(v);
+        textlayout.addView(v);
         //desplaza
         v.getParent().requestChildFocus(v, v);
     }

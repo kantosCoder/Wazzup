@@ -15,22 +15,28 @@ import com.google.android.material.snackbar.Snackbar;
 
 public class Configuration extends AppCompatActivity {
     //punto de entrada principal// pantalla configuracion // sergio
-    //sergio mamon declara las variables al comienzo de la claaase
     private String ipAddress ="";
+    //array de nombres de usuario
+    private String[] coolnames1 = new String[20];
+    private String namespace ="";
+    private int rannum = 0;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.configuration_activity);
-
         EditText IpText =(EditText)findViewById(R.id.DireccionIpText);
         EditText PuertoText = (EditText)findViewById(R.id.PuertoText);
         EditText UserText = (EditText)findViewById(R.id.usuarioText);
-
         WifiManager wifiMgr = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
         WifiInfo wifiInfo = wifiMgr.getConnectionInfo();
-        //lo inicializas en el oncreate
         ipAddress = Formatter.formatIpAddress(wifiInfo.getIpAddress());
-        IpText.setHint(ipAddress);
+        IpText.setText(ipAddress);
+        //cargar array con nombres
+        rollnames();
+        rannum = (int) (Math.random()*19+0);
+        namespace = coolnames1[rannum];
+        rannum = (int) (Math.random()*19+0);
+        UserText.setText(namespace+coolnames1[rannum]);
 
     }
     public void EnviarCliente(View vista){
@@ -83,5 +89,28 @@ public class Configuration extends AppCompatActivity {
             startActivity(sendServer);
         }
 
+    }
+    private void rollnames(){
+        //nombres en los array
+            coolnames1[0] = "Green";
+            coolnames1[1] = "Dragon";
+            coolnames1[2] = "Visor";
+            coolnames1[3] = "Drop";
+            coolnames1[4] = "Bass";
+            coolnames1[5] = "Canon";
+            coolnames1[6] = "Cool";
+            coolnames1[7] = "Hippie";
+            coolnames1[8] = "Dude";
+            coolnames1[9] = "Moon";
+            coolnames1[10] = "Can";
+            coolnames1[11] = "Purple";
+            coolnames1[12] = "Doctor";
+            coolnames1[13] = "Student";
+            coolnames1[14] = "Visor";
+            coolnames1[15] = "Awake";
+            coolnames1[16] = "Power";
+            coolnames1[17] = "Mug";
+            coolnames1[18] = "Extra";
+            coolnames1[19] = "Ice";
     }
 }
