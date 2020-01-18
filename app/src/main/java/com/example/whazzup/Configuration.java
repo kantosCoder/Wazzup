@@ -15,7 +15,6 @@ import com.google.android.material.snackbar.Snackbar;
 
 public class Configuration extends AppCompatActivity {
     //punto de entrada principal// pantalla configuracion // sergio
-º
     //sergio mamon declara las variables al comienzo de la claaase
     private String ipAddress ="";
     @Override

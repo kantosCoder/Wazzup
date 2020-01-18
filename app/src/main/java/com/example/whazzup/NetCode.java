@@ -5,6 +5,7 @@ import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -35,9 +36,8 @@ public class NetCode extends AppCompatActivity {
     private String username ="";
     private String servername = "";
     private String netport = "";
-    private LinearLayout textlayout;
+    protected LinearLayout textlayout;
     private boolean goodtogo;
-    private LinearLayout linearlayoutmessage;
     private Calendar date;
     private Socket socket;
     private EditText editmessage; //<-definir en oncreate
@@ -138,7 +138,7 @@ public class NetCode extends AppCompatActivity {
     private void messagePush(MessageViewer v)
     {
         //añade nuevo mensaje
-        textlayout.addView(v);
+        this.textlayout.addView(v);
         //desplaza
         v.getParent().requestChildFocus(v, v);
     }
@@ -146,7 +146,6 @@ public class NetCode extends AppCompatActivity {
     protected class newMessage extends Thread{
 
         private String messagetext="";
-        private String role="";
         newMessage(String message) {
             messagetext = message;
         }
@@ -164,7 +163,7 @@ public class NetCode extends AppCompatActivity {
                 {
                     //crear un ontrol REAL de mensaje propio o ajeno
                     MessageViewer vista = new MessageViewer(NetCode.this);
-                    if(NetCode.msgrole.equals("SELF")) { //esto aun no hace nada, controlar correctamente
+                    if(NetCode.msgrole.equals("SELF")) { //UNDER CONTROL
                         vista.sentMsg(MessageViewer.SELF);
                     }
                     else{
@@ -196,7 +195,7 @@ public class NetCode extends AppCompatActivity {
                 {
                     MessageViewer vista = new MessageViewer(NetCode.this);
                     Calendar calendario = Calendar.getInstance();
-                    vista.setDate(""+(String.format("%02d", (calendario.get(Calendar.HOUR_OF_DAY)))+":"+(String.format("%02d", (calendario.get(Calendar.MINUTE))))));
+                    //vista.setDate(""+(String.format("%02d", (calendario.get(Calendar.HOUR_OF_DAY)))+":"+(String.format("%02d", (calendario.get(Calendar.MINUTE))))));
                     vista.setText(msg);
                     //vista.setHora("");
                     vista.sentMsg(-1);
@@ -234,6 +233,7 @@ public class NetCode extends AppCompatActivity {
                         {
                             case 3:
                             {
+                                msgrole = "SELF";
                                 new newMessage(trozos[1]).start();//Añadimos el mensaje a la interfaz
                             }break;
                         }
@@ -260,13 +260,19 @@ public class NetCode extends AppCompatActivity {
         public void run()
         {
             executing=true;
+            //añadido
+            try {
+                dataInputStream = new DataInputStream(socket.getInputStream());//Creamos el inputstream
+            }catch(Exception e){ Log.d("Error DatainputStream", "jejeje"); e.printStackTrace();}
+
 
             while(executing)
             {
                 buffer="";
                 buffer=ObtenerCadena();//Obtenemos la cadena del buffer
-                if(buffer!="" && buffer.length()!=0)//Comprobamos que esa cadena tenga contenido
+                if(buffer!="" && buffer.length()!=0) {//Comprobamos que esa cadena tenga contenido
                     ProcessMessage();//Procesamos la cadena recibida
+                }
             }
         }
 
@@ -276,31 +282,34 @@ public class NetCode extends AppCompatActivity {
             if (trozos.length > 1) {
                 //Log.d("Trozos", ""+trozos.length);
                 switch (Integer.parseInt(trozos[0])) {
-                    case 0://Obtenemos el nombre del servidor
+                    case 0://nameserver
                     {
-                        servername = trozos[1];
+                        if (devicerole.equals("CLIENT")) {
+                            servername = trozos[1];
+                        }
                     }
                     break;
-                    case 1://Si es el nombre de usuario notificamos al hilo de espera de conexion que ya tenemos el nombre de usuario
+                    case 1://username
                     {
                         if (devicerole.equals("SERVER")) {
                             NewClients.UserName = trozos[1];
                         }
                     }
                     break;
-                    case 2://Obtenemos el nombre del servidor
+                    case 2://connection answer
                     {
                         if (devicerole.equals("CLIENT")) {
                             ClientStart.respuesta = Integer.parseInt(trozos[1]);//Notificamos al hilo de conexion la respuesta del servidor
                         }
                     }
                     break;
-                    case 3://Si es un mensaje normal, creamos un hilo para añadirlo a la interfaz
+                    case 3://normalmessage
                     {
+                        msgrole = "OTHER";
                         new newMessage(trozos[1]).start();
                     }
                     break;
-                    case 4://Si el usuario se desconecta, mostrmoas en la pantalla que se ha desconectado y reinicimaos la conexión, para esperar nuevos usuarios
+                    case 4://discon. message
                     {
                         if (devicerole.equals("SERVER")) {
                             new ShowMessageInfo("Se ha desconectado " + trozos[1] + " :(").run();//Añadimos el mensaje a la interfaz, que se ha desconectado
@@ -370,7 +379,7 @@ public class NetCode extends AppCompatActivity {
                 while(servername.length()<1){}//Esperamos a que el servidor nos envie su nombre
 
                 //Añadimos un mensaje a la interfaz indicando que estamos pidiendo autorización en el servidor
-                new ShowMessageInfo("Pidiendo autorización para entrar al servidor: '"+servername+"'").start();
+                //new ShowMessageInfo("Pidiendo a utorización para entrar al servidor: '"+servername+"'").start();
 
                 //Le enviamos al servidor nuestro nombre, para que pueda aceptarnos o rechazarnos jejeje
                 SocketMessage sendNameUser;
@@ -400,8 +409,6 @@ public class NetCode extends AppCompatActivity {
     private class ClientAwaitThread extends Thread
     {
         public boolean esperando_nuevos_clientes;
-
-        public int aceptar_conexion;
         String UserName;
 
         public void run()
@@ -410,6 +417,7 @@ public class NetCode extends AppCompatActivity {
             esperando_nuevos_clientes=true;
             try
             {
+                new ShowMessageInfo("Ahora eres el server...").start();
                 //Abrimos el socket
                 serverSocket = new ServerSocket(Integer.parseInt(netport));
 
@@ -446,7 +454,6 @@ public class NetCode extends AppCompatActivity {
                     while(UserName.length()<1){}
 
                     //changeTitle(UserName);//Ponemos el nombre de usuario como titulo
-
                         //Mostramos un mensaje indicando que hemos aceptado al usuario
                         new ShowMessageInfo("Has aceptado a '"+UserName+"', ya puedes hablar con él jeje").start();
 
