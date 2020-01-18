@@ -8,16 +8,20 @@
 
     <Button
         android:id="@+id/bEnviarServidor"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        style="@style/Widget.AppCompat.Button"
+        android:layout_width="211dp"
+        android:layout_height="58dp"
+        android:drawableLeft="@drawable/ic_launcher_server"
         android:onClick="EnviarServidor"
-        android:text="Continuar como Servidor"
+        android:text="Servidor"
+        app:backgroundTint="@color/colorServer"
+
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.505"
+        app:layout_constraintHorizontal_bias="0.494"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.91" />
+        app:layout_constraintVertical_bias="0.92" />
 
     <EditText
         android:id="@+id/usuarioText"
@@ -111,10 +115,12 @@
 
     <Button
         android:id="@+id/bEnviarCliente"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        style="@style/Widget.AppCompat.Button.Colored"
+        android:layout_width="211dp"
+        android:layout_height="58dp"
+        android:drawableLeft="@drawable/ic_launcher_cliente"
         android:onClick="EnviarCliente"
-        android:text="Continuar como Cliente"
+        android:text="Cliente"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.501"
