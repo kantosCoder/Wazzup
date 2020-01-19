@@ -31,7 +31,7 @@ public class NetCode extends AppCompatActivity {
     private String servername = "";
     private String netport = "";
     protected LinearLayout textlayout;
-    private boolean goodtogo;
+    private boolean goodtogo = false;
     private Socket socket;
     private EditText editmessage;
     private DataInputStream dataInputStream;
@@ -74,6 +74,14 @@ public class NetCode extends AppCompatActivity {
         }
     }
     //>>>>>>LAYOUT<<<<<<
+    //MINISLEEP, PARA QUE DE TIEMPO AL ONDESTROY
+    private void minisleep(){
+        try{
+            Thread.sleep(400);
+        }
+        catch (InterruptedException e) {
+        }
+    }
     //SI HAY CONEXION, ACTIVAMOS EL EDIT_TEXT
     private void getStatus(boolean status)
     {
@@ -178,7 +186,6 @@ public class NetCode extends AppCompatActivity {
         //modificar/separar
         int SELF=0;
         int OTHER=1;
-
         public MessageViewer(Context context)
         {
             super(context);
@@ -264,48 +271,46 @@ public class NetCode extends AppCompatActivity {
     @Override
     protected void onDestroy()
     {
-        String current = "";
         super.onDestroy();//Si se sale del chat
-        if(goodtogo) {//si ya había conexión socket
-            if (devicerole.equals("USER")) {
-                current = "3#"+username;
-            } else {
-                current = "3#"+servername;
-            }
-            (new SocketMessage(current, false)).run(); //se avisa de la desconexion
+        SocketMessage kill;
+        kill=new SocketMessage("3#BYE", false);
+        if(goodtogo){//si ya había conexión socket
+                kill.start();
+            minisleep();
+            destroyNetwork();
         }
+
     }
-    private void destroyNetwork(){
-        //Limpiar sockets
+    private void destroyNetwork(){//cerrar sockets
         try {
-            if(dataInputStream!=null) {
-                dataInputStream.close();
-                }
+            if(dataInputStream!=null) dataInputStream.close();
         }
         catch(Exception e){}
-        try {
-            if (dataOutputStream != null) {
-                dataOutputStream.close();
+        finally {
+            dataInputStream=null;
+            try {
+                if(dataOutputStream!=null) dataOutputStream.close();
             }
-        }
-        catch(Exception e){}
-        try {
-            if(socket!=null)  {
-                socket.close();
-            }
-        }
-        catch(Exception e){}
+            catch(Exception e){}
+            finally {
                 dataOutputStream=null;
-                socket=null;
-                dataInputStream=null;
-        //THREAD KILL (POR HACER)
-        if(HiloEscucha!=null)
-        {
-            HiloEscucha.engine=false;
-            HiloEscucha.interrupt();
-            HiloEscucha=null;
+                try {
+                    if(socket!=null) socket.close();
+                }
+                catch(Exception e){}
+                finally {
+                    socket=null;
+                    try {
+                        if(serverSocket!=null) socket.close();
+                    }
+                    catch(Exception e){}
+                    finally {
+                        serverSocket=null;
+                    }
+                }
+            }
         }
-        goodtogo=false;
+        getStatus(false);
     }
     //ENVIO DE MENSAJES POR RED
     private class SocketMessage extends Thread
@@ -397,21 +402,32 @@ public class NetCode extends AppCompatActivity {
                     case 3://discon. message
                     {
                         if (devicerole.equals("SERVER")) {
-                            new ShowMessageInfo(splitter[1]+" ha abandonado el chat").run();
+                            new ShowMessageInfo("'"+username+"'\nha abandonado el chat").run();
+                            NewClients.engine=false;
+                            NewClients.interrupt();
+                            NewClients=null;
+                            minisleep();
                             HiloEscucha.engine=false;
                             HiloEscucha.interrupt();
                             HiloEscucha=null;
-                            destroyNetwork();
+                            minisleep();
                             (NewClients=new ClientAwaitThread()).start();//se reinicia el hilo de usuarios
                         }
-                        if (devicerole.equals("CLIENT")) {
-                            new ShowMessageInfo("El servidor " + splitter[1] + " \n no responde, desconectando...").run();
+                        if (devicerole.equals("USER")) {
+                            new ShowMessageInfo("El servidor " + servername + " \n no responde, desconectando...").run();
+                            if(ClientStart!=null){
+                            ClientStart.interrupt();
+                            ClientStart=null;
+                            }
+                            minisleep();
                             HiloEscucha.engine=false;
                             HiloEscucha.interrupt();
                             HiloEscucha=null;
-                            destroyNetwork();
+                            minisleep();
                             new ShowMessageInfo("--Conexion terminada--").run();
                         }
+                        destroyNetwork();
+                        getStatus(false);
                     }
                     break;
                     default:
@@ -440,7 +456,7 @@ public class NetCode extends AppCompatActivity {
             {
                 socket = new Socket(ip, Integer.parseInt(netport));//Preparacion de socket
                 (HiloEscucha=new MessageRefresher(socket)).start();//Hilo de entrada de mensajes
-                new ShowMessageInfo("Conectando a: "+ip+""+netport).start();//Conexion exitosa (mensaje a layout)
+                new ShowMessageInfo("Conectando a: "+ip+":"+netport).start();//Conexion exitosa (mensaje a layout)
                 dataOutputStream= new DataOutputStream(socket.getOutputStream());//preparar dataoutput
                 while(servername.length()<1){}//OBTENIENDO NOMBRE DEL SERVER / MOMENTO CRITICO, PODRÍA PARARSE
                 SocketMessage sendusername;
@@ -458,16 +474,16 @@ public class NetCode extends AppCompatActivity {
     //HILO DE SERVER
     private class ClientAwaitThread extends Thread
     {
-        public boolean waiting;
+        public boolean engine;
         String UserName = "";
         public void run()
         {
-            waiting=true;
+            engine=true;
             try
             {
                 new ShowMessageInfo("Servidor iniciado...").start();//El server escucha correctamente
                 serverSocket = new ServerSocket(Integer.parseInt(netport)); //socket de server en el puerto especificado
-                while (waiting)
+                while (engine)
                 {
                     Socket socket = serverSocket.accept();//Streams
                     try {
@@ -482,10 +498,10 @@ public class NetCode extends AppCompatActivity {
                     sendservername=new SocketMessage("0#"+servername, false);
                     sendservername.run();
                     while(UserName.length()<1){}//OBTENIENDO NOMBRE DEL SERVER / MOMENTO CRITICO, PODRÍA PARARSE
-                    new ShowMessageInfo("'"+UserName+"' ha entrado \nal chat").start(); //El usuario ha establecido conexión
+                    new ShowMessageInfo("'"+UserName+"'\nha entrado al chat").start(); //El usuario ha establecido conexión
                     username = UserName; //Carga de variable local a global para tratar el nombre en la interfaz
                     //Notificamos al usuario que se ha aceptado la conexion
-                    waiting=false;
+                    engine=false;
                     getStatus(true);
                 }
             }
