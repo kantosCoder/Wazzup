@@ -300,8 +300,8 @@ public class NetCode extends AppCompatActivity {
             kill.start();
             minisleep();
             destroyNetwork();
-            if(devicerole.equals("SERVER")){serverdestroy();}
-            if(devicerole.equals("USER")){clientdestroy();}
+            if(devicerole.equals("SERVER")){serverdestroy(); minisleep();}
+            if(devicerole.equals("USER")){clientdestroy();minisleep();}
         }
 
     }
