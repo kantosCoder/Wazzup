@@ -1,5 +1,6 @@
 package com.example.whazzup;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
@@ -8,6 +9,7 @@ import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.text.format.Formatter;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -39,6 +41,25 @@ public class Configuration extends AppCompatActivity {
         rannum = (int) (Math.random()*19+0);
         UserText.setText(namespace+coolnames1[rannum]);
 
+    }
+    public void AcercaDe(View vista){
+        final AlertDialog.Builder alert = new AlertDialog.Builder(Configuration.this);
+        View mView =  getLayoutInflater().inflate(R.layout.acerca_dialog,null);
+        final TextView AcercaTexto = (TextView) mView.findViewById(R.id.textViewAcerca);
+        Button btn_ok = (Button)mView.findViewById(R.id.buttonOkay);
+        alert.setView(mView);
+
+        final AlertDialog alertDialog = alert.create();
+        alertDialog.setCanceledOnTouchOutside(false);
+
+        btn_ok.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+            }
+        });
+
+        alertDialog.show();
     }
     public void EnviarCliente(View vista){
         EditText IpText =(EditText)findViewById(R.id.DireccionIpText);
