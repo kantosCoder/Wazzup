@@ -82,6 +82,28 @@ public class NetCode extends AppCompatActivity {
         catch (InterruptedException e) {
         }
     }
+    //DESTRUCCION DE HILOS
+    private void serverdestroy(){
+        NewClients.engine=false;
+        NewClients.interrupt();
+        NewClients=null;
+        minisleep();
+        HiloEscucha.engine=false;
+        HiloEscucha.interrupt();
+        HiloEscucha=null;
+        minisleep();
+    }
+    private void clientdestroy(){
+        if(ClientStart!=null){
+            ClientStart.interrupt();
+            ClientStart=null;
+        }
+        minisleep();
+        HiloEscucha.engine=false;
+        HiloEscucha.interrupt();
+        HiloEscucha=null;
+        minisleep();
+    }
     //SI HAY CONEXION, ACTIVAMOS EL EDIT_TEXT
     private void getStatus(boolean status)
     {
@@ -275,9 +297,11 @@ public class NetCode extends AppCompatActivity {
         SocketMessage kill;
         kill=new SocketMessage("3#BYE", false);
         if(goodtogo){//si ya había conexión socket
-                kill.start();
+            kill.start();
             minisleep();
             destroyNetwork();
+            if(devicerole.equals("SERVER")){serverdestroy();}
+            if(devicerole.equals("USER")){clientdestroy();}
         }
 
     }
@@ -403,27 +427,12 @@ public class NetCode extends AppCompatActivity {
                     {
                         if (devicerole.equals("SERVER")) {
                             new ShowMessageInfo("'"+username+"'\nha abandonado el chat").run();
-                            NewClients.engine=false;
-                            NewClients.interrupt();
-                            NewClients=null;
-                            minisleep();
-                            HiloEscucha.engine=false;
-                            HiloEscucha.interrupt();
-                            HiloEscucha=null;
-                            minisleep();
+                            serverdestroy();
                             (NewClients=new ClientAwaitThread()).start();//se reinicia el hilo de usuarios
                         }
                         if (devicerole.equals("USER")) {
                             new ShowMessageInfo("El servidor " + servername + " \n no responde, desconectando...").run();
-                            if(ClientStart!=null){
-                            ClientStart.interrupt();
-                            ClientStart=null;
-                            }
-                            minisleep();
-                            HiloEscucha.engine=false;
-                            HiloEscucha.interrupt();
-                            HiloEscucha=null;
-                            minisleep();
+                            clientdestroy();
                             new ShowMessageInfo("--Conexion terminada--").run();
                         }
                         destroyNetwork();
