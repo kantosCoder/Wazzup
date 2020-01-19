@@ -159,14 +159,18 @@
 
     <Button
         android:id="@+id/buttonAcerca"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="acerca"
+        style="@style/Widget.AppCompat.Button"
+        android:layout_width="61dp"
+        android:layout_height="39dp"
+        android:drawableTop="@drawable/ic_action_acerca"
+        android:onClick="AcercaDe"
+        android:text=""
+        app:backgroundTint="@color/colorLast"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintHorizontal_bias="0.954"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.0" />
+        app:layout_constraintVertical_bias="0.023" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

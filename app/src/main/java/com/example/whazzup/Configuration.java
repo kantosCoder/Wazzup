@@ -50,12 +50,11 @@ public class Configuration extends AppCompatActivity {
         alert.setView(mView);
 
         final AlertDialog alertDialog = alert.create();
-        alertDialog.setCanceledOnTouchOutside(false);
 
         btn_ok.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                alertDialog.dismiss();
             }
         });
 

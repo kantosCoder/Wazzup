@@ -4,6 +4,7 @@
     <color name="colorPrimaryDark">#00574B</color>
     <color name="colorAccent">#00BCD4</color>
     <color name="colorServer">#4CAF50</color>
+    <color name="colorLast">#CFA230</color>
     <color name="system">#000000</color>
     <color name="user">#859AFF</color>
 </resources>
