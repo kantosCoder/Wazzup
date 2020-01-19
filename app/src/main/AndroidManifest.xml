@@ -11,8 +11,10 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".NetCode"></activity>
-        <activity android:name=".Configuration">
+        <activity android:name=".NetCode"
+            android:screenOrientation='portrait'></activity>
+        <activity android:name=".Configuration"
+            android:screenOrientation='portrait'>
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
