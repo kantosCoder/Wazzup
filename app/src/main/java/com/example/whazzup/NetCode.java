@@ -77,13 +77,14 @@ public class NetCode extends AppCompatActivity {
     //MINISLEEP, PARA QUE DE TIEMPO AL ONDESTROY
     private void minisleep(){
         try{
-            Thread.sleep(400);
+            Thread.sleep(600);
         }
         catch (InterruptedException e) {
         }
     }
     //DESTRUCCION DE HILOS
     private void serverdestroy(){
+        username="";
         NewClients.engine=false;
         NewClients.interrupt();
         NewClients=null;
@@ -92,8 +93,16 @@ public class NetCode extends AppCompatActivity {
         HiloEscucha.interrupt();
         HiloEscucha=null;
         minisleep();
+        try {
+            serverSocket.close();
+        } catch (Exception e) {
+        } finally {
+            serverSocket = null;
+        }
     }
     private void clientdestroy(){
+        servername="";
+        username="";
         if(ClientStart!=null){
             ClientStart.interrupt();
             ClientStart=null;
@@ -428,6 +437,8 @@ public class NetCode extends AppCompatActivity {
                         if (devicerole.equals("SERVER")) {
                             new ShowMessageInfo("'"+username+"'\nha abandonado el chat").run();
                             serverdestroy();
+                            minisleep();
+                            minisleep();
                             (NewClients=new ClientAwaitThread()).start();//se reinicia el hilo de usuarios
                         }
                         if (devicerole.equals("USER")) {
