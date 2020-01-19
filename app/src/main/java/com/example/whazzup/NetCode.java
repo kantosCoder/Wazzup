@@ -77,7 +77,7 @@ public class NetCode extends AppCompatActivity {
     //MINISLEEP, PARA QUE DE TIEMPO AL ONDESTROY
     private void minisleep(){
         try{
-            Thread.sleep(600);
+            Thread.sleep(400);
         }
         catch (InterruptedException e) {
         }
@@ -85,20 +85,22 @@ public class NetCode extends AppCompatActivity {
     //DESTRUCCION DE HILOS
     private void serverdestroy(){
         username="";
-        NewClients.engine=false;
-        NewClients.interrupt();
-        NewClients=null;
-        minisleep();
         HiloEscucha.engine=false;
         HiloEscucha.interrupt();
         HiloEscucha=null;
         minisleep();
+        NewClients.UserName="";
+        NewClients.engine=false;
+        NewClients.interrupt();
+        NewClients=null;
+        minisleep();
+        destroyNetwork();
+        minisleep();
         try {
             serverSocket.close();
-        } catch (Exception e) {
-        } finally {
+        } catch (Exception e) {}
             serverSocket = null;
-        }
+        minisleep();
     }
     private void clientdestroy(){
         servername="";
@@ -112,6 +114,7 @@ public class NetCode extends AppCompatActivity {
         HiloEscucha.interrupt();
         HiloEscucha=null;
         minisleep();
+        getStatus(false);
     }
     //SI HAY CONEXION, ACTIVAMOS EL EDIT_TEXT
     private void getStatus(boolean status)
@@ -308,7 +311,7 @@ public class NetCode extends AppCompatActivity {
         if(goodtogo){//si ya había conexión socket
             kill.start();
             minisleep();
-            destroyNetwork();
+            //destroyNetwork();
             if(devicerole.equals("SERVER")){serverdestroy(); minisleep();}
             if(devicerole.equals("USER")){clientdestroy();minisleep();}
         }
@@ -316,34 +319,18 @@ public class NetCode extends AppCompatActivity {
     }
     private void destroyNetwork(){//cerrar sockets
         try {
-            if(dataInputStream!=null) dataInputStream.close();
-        }
-        catch(Exception e){}
-        finally {
-            dataInputStream=null;
-            try {
-                if(dataOutputStream!=null) dataOutputStream.close();
-            }
-            catch(Exception e){}
-            finally {
-                dataOutputStream=null;
-                try {
-                    if(socket!=null) socket.close();
-                }
-                catch(Exception e){}
-                finally {
-                    socket=null;
-                    try {
-                        if(serverSocket!=null) socket.close();
-                    }
-                    catch(Exception e){}
-                    finally {
-                        serverSocket=null;
-                    }
-                }
-            }
-        }
-        getStatus(false);
+            dataInputStream.close();
+        } catch (Exception e) {}
+        dataInputStream = null;
+        minisleep();
+        try {
+            dataInputStream.close();
+        } catch (Exception e) {}
+        dataOutputStream = null;
+        try {
+            socket.close();
+        } catch (Exception e) {}
+        socket = null;
     }
     //ENVIO DE MENSAJES POR RED
     private class SocketMessage extends Thread
@@ -439,14 +426,14 @@ public class NetCode extends AppCompatActivity {
                             serverdestroy();
                             minisleep();
                             minisleep();
-                            (NewClients=new ClientAwaitThread()).start();//se reinicia el hilo de usuarios
+                            (NewClients=new ClientAwaitThread()).start();//se resetea el hilo
                         }
                         if (devicerole.equals("USER")) {
                             new ShowMessageInfo("El servidor " + servername + " \n no responde, desconectando...").run();
                             clientdestroy();
                             new ShowMessageInfo("--Conexion terminada--").run();
                         }
-                        destroyNetwork();
+                        //destroyNetwork();
                         getStatus(false);
                     }
                     break;
@@ -487,7 +474,6 @@ public class NetCode extends AppCompatActivity {
             } catch (IOException e) {
                 new ShowMessageInfo("No se ha podido conectar a "+ip+"").start();
                 getStatus(false);
-                //INSERTAR METODO NETWORKDESTROY...
             }
         }
     }
@@ -498,6 +484,7 @@ public class NetCode extends AppCompatActivity {
         String UserName = "";
         public void run()
         {
+            UserName = "";
             engine=true;
             try
             {
@@ -517,7 +504,7 @@ public class NetCode extends AppCompatActivity {
                     SocketMessage sendservername; //envío de nombre de server a cliente
                     sendservername=new SocketMessage("0#"+servername, false);
                     sendservername.run();
-                    while(UserName.length()<1){}//OBTENIENDO NOMBRE DEL SERVER / MOMENTO CRITICO, PODRÍA PARARSE
+                    while(UserName.length()<1){}//OBTENIENDO NOMBRE DEL USER / MOMENTO CRITICO, PODRÍA PARARSE
                     new ShowMessageInfo("'"+UserName+"'\nha entrado al chat").start(); //El usuario ha establecido conexión
                     username = UserName; //Carga de variable local a global para tratar el nombre en la interfaz
                     //Notificamos al usuario que se ha aceptado la conexion
