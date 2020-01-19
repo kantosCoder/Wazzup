@@ -50,7 +50,7 @@
                 android:id="@+id/sendButton"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:background="@android:drawable/ic_menu_send"
+                android:background="@drawable/msgsend"
                 android:backgroundTint="@android:color/holo_blue_light"
                 android:onClick="putMessage" />
 

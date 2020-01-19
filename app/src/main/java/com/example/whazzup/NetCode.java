@@ -32,7 +32,6 @@ public class NetCode extends AppCompatActivity {
     private String netport = "";
     protected LinearLayout textlayout;
     private boolean goodtogo;
-    private Calendar date;
     private Socket socket;
     private EditText editmessage;
     private DataInputStream dataInputStream;
@@ -47,7 +46,7 @@ public class NetCode extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //app solo en vertical
+        //app solo en vertical ARREGLAR EN MANIFEST!
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         setContentView(R.layout.activity_net_code);
         //OBTENCION DE VARIABLES PUTEXTRA
@@ -261,10 +260,23 @@ public class NetCode extends AppCompatActivity {
 
     }
     //>>>>>>NETWORK/HILOS<<<<<<
-    //destruir conexión, notificar, limpiar, volver al menú (ESPECIFICAR EN ONDESTROY)
+    //destruir conexión, notificar, limpiar, volver al menú ONDESTROY Y METODO
+    @Override
+    protected void onDestroy()
+    {
+        String current = "";
+        super.onDestroy();//Si se sale del chat
+        if(goodtogo) {//si ya había conexión socket
+            if (devicerole.equals("USER")) {
+                current = "3#"+username;
+            } else {
+                current = "3#"+servername;
+            }
+            (new SocketMessage(current, false)).run(); //se avisa de la desconexion
+        }
+    }
     private void destroyNetwork(){
         //Limpiar sockets
-        goodtogo=false;
         try {
             if(dataInputStream!=null) {
                 dataInputStream.close();
@@ -293,6 +305,7 @@ public class NetCode extends AppCompatActivity {
             HiloEscucha.interrupt();
             HiloEscucha=null;
         }
+        goodtogo=false;
     }
     //ENVIO DE MENSAJES POR RED
     private class SocketMessage extends Thread
@@ -314,17 +327,17 @@ public class NetCode extends AppCompatActivity {
                 dataOutputStream.writeUTF(msg);//ENVIO DE MENSAJE POR RED
                 if(abletoshow)
                 {
-                    String[] trozos=msg.split("#");
-                    if(trozos.length>1 && Integer.parseInt(trozos[0])==2)
+                    String[] splitter=msg.split("#");
+                    if(splitter.length>1 && Integer.parseInt(splitter[0])==2)
                     {
                         msgrole = "SELF"; //El mensaje que mandamos se va a pasar a pantalla
-                        new newMessage(trozos[1]).start();//MENSAJE A LAYOUT
+                        new newMessage(splitter[1]).start();//MENSAJE A LAYOUT
                     }
                 }
             }catch (IOException e)
             {
                 //Punto de debug
-                //MENSAJE DE ERROR EN LA INTERFAZ? por hacer...
+                //MENSAJE DE ERROR EN LA INTERFAZ?podria hacerse...
             }
         }
     }
@@ -384,10 +397,20 @@ public class NetCode extends AppCompatActivity {
                     case 3://discon. message
                     {
                         if (devicerole.equals("SERVER")) {
-                            new ShowMessageInfo("Se ha desconectado " + splitter[1] + " :(").run();
+                            new ShowMessageInfo(splitter[1]+" ha abandonado el chat").run();
+                            HiloEscucha.engine=false;
+                            HiloEscucha.interrupt();
+                            HiloEscucha=null;
+                            destroyNetwork();
+                            (NewClients=new ClientAwaitThread()).start();//se reinicia el hilo de usuarios
                         }
                         if (devicerole.equals("CLIENT")) {
-                            new ShowMessageInfo("Se ha desconectado " + splitter[1] + " :(").run();
+                            new ShowMessageInfo("El servidor " + splitter[1] + " \n no responde, desconectando...").run();
+                            HiloEscucha.engine=false;
+                            HiloEscucha.interrupt();
+                            HiloEscucha=null;
+                            destroyNetwork();
+                            new ShowMessageInfo("--Conexion terminada--").run();
                         }
                     }
                     break;
@@ -423,7 +446,7 @@ public class NetCode extends AppCompatActivity {
                 SocketMessage sendusername;
                 sendusername=new SocketMessage("1#"+username, true);
                 sendusername.start();
-                new ShowMessageInfo("Conexion establecida con: \n '"+servername+"'").start(); //Mensaje de confirmacion a interfaz
+                new ShowMessageInfo("Conexion establecida con: \n'"+servername+"'").start(); //Mensaje de confirmacion a interfaz
                 getStatus(true); //se habilita la escritura
             } catch (IOException e) {
                 new ShowMessageInfo("No se ha podido conectar a "+ip+"").start();
@@ -459,7 +482,7 @@ public class NetCode extends AppCompatActivity {
                     sendservername=new SocketMessage("0#"+servername, false);
                     sendservername.run();
                     while(UserName.length()<1){}//OBTENIENDO NOMBRE DEL SERVER / MOMENTO CRITICO, PODRÍA PARARSE
-                    new ShowMessageInfo("'"+UserName+"' ha entrado al chat").start(); //El usuario ha establecido conexión
+                    new ShowMessageInfo("'"+UserName+"' ha entrado \nal chat").start(); //El usuario ha establecido conexión
                     username = UserName; //Carga de variable local a global para tratar el nombre en la interfaz
                     //Notificamos al usuario que se ha aceptado la conexion
                     waiting=false;
