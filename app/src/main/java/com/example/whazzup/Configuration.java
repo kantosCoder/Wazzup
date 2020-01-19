@@ -12,13 +12,14 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import com.google.android.material.snackbar.Snackbar;
-
+//ACTIVIDAD DE CONFIGURACION
 public class Configuration extends AppCompatActivity {
-    //punto de entrada principal// pantalla configuracion // sergio
+    //punto de entrada principal de la aplicación// pantalla configuracion // SERGIO
     private String ipAddress ="";
     //array de nombres de usuario
     private String[] coolnames1 = new String[20];
     private String namespace ="";
+    private EditText UserText;
     private int rannum = 0;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,7 +27,7 @@ public class Configuration extends AppCompatActivity {
         setContentView(R.layout.configuration_activity);
         EditText IpText =(EditText)findViewById(R.id.DireccionIpText);
         EditText PuertoText = (EditText)findViewById(R.id.PuertoText);
-        EditText UserText = (EditText)findViewById(R.id.usuarioText);
+        UserText = (EditText)findViewById(R.id.usuarioText);
         WifiManager wifiMgr = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
         WifiInfo wifiInfo = wifiMgr.getConnectionInfo();
         ipAddress = Formatter.formatIpAddress(wifiInfo.getIpAddress());
@@ -112,5 +113,11 @@ public class Configuration extends AppCompatActivity {
             coolnames1[17] = "Mug";
             coolnames1[18] = "Extra";
             coolnames1[19] = "Ice";
+    }
+    public void randomizer(View vista){
+        rannum = (int) (Math.random()*19+0);
+        namespace = coolnames1[rannum];
+        rannum = (int) (Math.random()*19+0);
+        UserText.setText(namespace+coolnames1[rannum]);
     }
 }

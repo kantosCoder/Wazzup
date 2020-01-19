@@ -1,11 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent" android:layout_height="match_parent">
 
     <ImageView
+        android:id="@+id/imageView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/imageView"/>
+        android:scaleType="centerCrop"
+        app:srcCompat="@drawable/bkgrnd"
+        tools:srcCompat="@drawable/bkgrnd" />
 
     <LinearLayout
         android:orientation="vertical"
@@ -28,19 +33,21 @@
         </ScrollView>
 
         <LinearLayout
-            android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="5dp"
-            >
+            android:background="#5CFFFFFF"
+            android:orientation="horizontal"
+            android:padding="5dp">
+
             <EditText
-                android:layout_weight="1"
+                android:id="@+id/messageInput"
                 android:layout_width="0dp"
-                android:padding="5dp"
                 android:layout_height="wrap_content"
-                android:id="@+id/EditTextMensaje"/>
+                android:layout_weight="1"
+                android:padding="5dp" />
 
             <ImageButton
+                android:id="@+id/sendButton"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:background="@android:drawable/ic_menu_send"

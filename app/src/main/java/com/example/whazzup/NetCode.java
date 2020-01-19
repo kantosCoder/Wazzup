@@ -2,15 +2,11 @@ package com.example.whazzup;
 import androidx.appcompat.app.AppCompatActivity;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
-import android.graphics.Bitmap;
-import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import java.io.DataInputStream;
@@ -21,14 +17,12 @@ import java.net.Socket;
 import java.util.Calendar;
 //!\\NETCODE STATUS NOTES
 //si el cliente no encuentra ek server, explota
-//trabajar en lineas 51, 24, 118, 214, 290 (changetitle), 244 (cerrar hilos),184(sin editar),392 obtener ip self de sergio
 //
-//CLASE DE CONVERSACION
-public class NetCode extends AppCompatActivity {
+//ACTIVIDAD DE CHAT[VARIABLES~ENTRADA~LAYOUT~NETWORK/HILOS]
 
-    //pantalla de chat// clases de conexion //hector
-    //HI, I'm coding right here xD
-    //bateria de variables:
+public class NetCode extends AppCompatActivity {
+    //pantalla de chat// clases de conexion // HECTOR
+    //>>>>>>VARIABLES:<<<<<<
     ServerSocket serverSocket;
     protected static String msgrole ="SELF";
     protected static String devicerole ="";
@@ -40,48 +34,48 @@ public class NetCode extends AppCompatActivity {
     private boolean goodtogo;
     private Calendar date;
     private Socket socket;
-    private EditText editmessage; //<-definir en oncreate
+    private EditText editmessage;
     private DataInputStream dataInputStream;
     private DataOutputStream dataOutputStream;
-    //hilos
-    //Hilo de cliente
-    ClientStartup ClientStart;
-    //hilo de server
-    ClientAwaitThread NewClients; //nuevos clientes
-    //hilo de escucha (cliente/server)
-    MessageRefresher HiloEscucha;
+    private Calendar calendario;
+    //BATERÍA DE HILOS
+    ClientStartup ClientStart;//Hilo de cliente
+    ClientAwaitThread NewClients; //hilo de server
+    MessageRefresher HiloEscucha;//hilo de escucha (cliente/server)
 
-
-    //PUNTO DE ENTRADA
+    //PUNTO DE ENTRADA DE LA ACTIVIDAD
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         //app solo en vertical
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         setContentView(R.layout.activity_net_code);
-        //OBTENCION DE VARIABLES PUTEXTRA (metodo de set.devicerole) <-muy necesario
-        //tipo de rol:
-        devicerole = getIntent().getStringExtra("type");
-        //putextra
-            ip = getIntent().getStringExtra("ip");
-            netport = getIntent().getStringExtra("puerto");
-            username = getIntent().getStringExtra("username");
-        //putextra de cliente
+        //OBTENCION DE VARIABLES PUTEXTRA
+        devicerole = getIntent().getStringExtra("type");//ROL ACTUAL DE DISPOSITIVO
+        ip = getIntent().getStringExtra("ip");
+        netport = getIntent().getStringExtra("puerto");
+        username = getIntent().getStringExtra("username");
         //inicializacion de campos
-        editmessage = findViewById(R.id.EditTextMensaje);
+        editmessage = findViewById(R.id.messageInput);
         textlayout = (LinearLayout) findViewById(R.id.ListaMensajes);
+        dataInputStream=null;
+        dataOutputStream=null;
+        socket = null;
         //inicializacion de cliente/servidor
         if(devicerole.equals("USER")){
             getStatus(false);
-            (ClientStart = new ClientStartup()).start();//Abrimos el hilo para conectarnos al servidor
+            (ClientStart = new ClientStartup()).start();
+            servername = "";
         }
         if(devicerole.equals("SERVER")){
             serverSocket = null;
             (NewClients=new ClientAwaitThread()).start();
+            servername = username;
+            username ="";
         }
     }
-    //NETWORK
-    //si estamos conectados, activa el campo de texto a editar
+    //>>>>>>LAYOUT<<<<<<
+    //SI HAY CONEXION, ACTIVAMOS EL EDIT_TEXT
     private void getStatus(boolean status)
     {
         goodtogo=status;
@@ -97,45 +91,20 @@ public class NetCode extends AppCompatActivity {
             }
         });
     }
-    //destruir conexion
-    private void destroyNetwork(){
-        //!\\definir con exactitud (eliminar finally)
-        goodtogo=false;
-        try {
-            if(dataInputStream!=null) {dataInputStream.close();}
-        }catch(Exception e){}
-        finally {
-            dataInputStream=null;
-            try {
-                if(dataOutputStream!=null) dataOutputStream.close();
-            }catch(Exception e){}
-            finally {
-                dataOutputStream=null;
-                try {
-                    if(socket!=null) socket.close();
-                }catch(Exception e){}
-                finally {
-                    socket=null;
-                }
-            }
-        }
-    }
-    //LAYOUT
-    //introduce los mensajes
+    //INTRODUCE LOS MENSAJES EN EL LAYOUT
     public void putMessage(View v)
     {
         if(goodtogo)
         {
-            String msg=editmessage.getText().toString();//Obtenemos la cadena
-
-            if(msg!="" && msg.length()>0)//Comprobamos que la cadena no sea vacia
+            String msg=editmessage.getText().toString();//ALMACENAMOS EL MENSAJE
+            if(msg!="" && msg.length()>0)
             {
-                new SocketMessage("3#"+msg, true).start();//Creamos un hilo para el envio del nuevo mensaje
+                new SocketMessage("2#"+msg, true).start();//SE ENVIA EL MENSAJE
                 editmessage.setText("");
             }
         }
     }
-    //desplaza los mensajes
+    //DESPLAZA LOS MENSAJES
     private void messagePush(MessageViewer v)
     {
         //añade nuevo mensaje
@@ -143,9 +112,8 @@ public class NetCode extends AppCompatActivity {
         //desplaza
         v.getParent().requestChildFocus(v, v);
     }
-    //agrega los mensajes (recibido, enviado)
+    //AGREGA LOS NUEVOS MENSAJES AL LAYOUT
     protected class newMessage extends Thread{
-
         private String messagetext="";
         newMessage(String message) {
             messagetext = message;
@@ -164,28 +132,27 @@ public class NetCode extends AppCompatActivity {
                 {
                     //crear un ontrol REAL de mensaje propio o ajeno
                     MessageViewer vista = new MessageViewer(NetCode.this);
-                    if(NetCode.msgrole.equals("SELF")) { //UNDER CONTROL
-                        vista.sentMsg(MessageViewer.SELF);
+                    if(NetCode.msgrole.equals("SELF")) {
+                        vista.sentMsg(0);
                     }
                     else{
-                        vista.sentMsg(MessageViewer.OTHER);
+                        vista.sentMsg(1);
                     }
-                    Calendar calendario = Calendar.getInstance();
+                    calendario = Calendar.getInstance();
                     vista.setDate(""+(String.format("%02d", (calendario.get(Calendar.HOUR_OF_DAY)))+":"+(String.format("%02d", (calendario.get(Calendar.MINUTE))))));
-                    vista.setText(messagetext);
-                    vista.setImage(null);
+                    vista.setMsgText(messagetext);
                     messagePush(vista);
                 }
             });
 
         }
     }
-    protected class ShowMessageInfo extends Thread//Añade a la interfaz un mensaje de información
+    protected class ShowMessageInfo extends Thread//CONVERSACION//MENSAJE DE SISTEMA
     {
         private String msg;
-
-        ShowMessageInfo(String message) {       msg = message;      }
-
+        ShowMessageInfo(String message) {
+            msg = message;
+        }
         @Override
         public void run()
         {
@@ -196,26 +163,147 @@ public class NetCode extends AppCompatActivity {
                 {
                     MessageViewer vista = new MessageViewer(NetCode.this);
                     Calendar calendario = Calendar.getInstance();
-                    //vista.setDate(""+(String.format("%02d", (calendario.get(Calendar.HOUR_OF_DAY)))+":"+(String.format("%02d", (calendario.get(Calendar.MINUTE))))));
-                    vista.setText(msg);
-                    //vista.setHora("");
+                    vista.setDate(""+(String.format("%02d", (calendario.get(Calendar.HOUR_OF_DAY)))+":"+(String.format("%02d", (calendario.get(Calendar.MINUTE))))));
+                    vista.setMsgText(msg);
                     vista.sentMsg(-1);
-                    vista.setImage(null);
                     messagePush(vista);
                 }
             });
 
         }
     }
+    //CLASE DE CONTROL DE MENSAJES [LAYOUT MESSAGEBOX]
+    private class MessageViewer extends LinearLayout
+    {
+        //Enteros para indicar el tipo de mensaje
+        //modificar/separar
+        int SELF=0;
+        int OTHER=1;
+
+        public MessageViewer(Context context)
+        {
+            super(context);
+
+            // Creamos la interfaz a partir del layout
+            String infService = Context.LAYOUT_INFLATER_SERVICE;
+            LayoutInflater li;
+            li = (LayoutInflater)getContext().getSystemService(infService);
+            li.inflate(R.layout.message_box, this, true);
+        }
+
+        public void setMsgText(String txt)
+        {
+            TextView mensaje=(TextView) findViewById(R.id.mainbox);
+            (mensaje).setText(txt);
+            if(txt.length()==0)
+            {
+                mensaje.setWidth(0); mensaje.setHeight(0);
+            }
+        }
+
+        public void setDate(String txt)
+        {
+            ((TextView) findViewById(R.id.msgDate)).setText(txt);
+        }
+
+        public void sentMsg(int typeofmsg)
+        {
+            int color;//Id del drawable para ponerle de fondo
+            TextView msg = findViewById(R.id.username);
+            TextView box = findViewById(R.id.mainbox);
+            if(typeofmsg==SELF)//SI EL MENSAJE A MOSTRAR ES NUESTRO
+            {
+                //elimina cabecera de usuario (ocultar)
+                LayoutParams params = (LayoutParams) msg.getLayoutParams(); //parametros del textview
+                params.height = 1; //altura del textview
+                msg.setLayoutParams(params); //se establecen los parametros
+                box.setTextSize(18);
+                ((TextView) findViewById(R.id.username)).setText(null);
+                layoutMove(((TextView) findViewById(R.id.rigthSpacer)));
+                color= R.drawable.sent_message;
+            }
+            else if(typeofmsg==OTHER)//SI EL MENSAJE A MOSTRAR NO ES NUESTRO
+            {
+                //reestablece cabecera de usuario
+                msg.setTextColor(getResources().getColor(R.color.user));
+                LayoutParams params = (LayoutParams) msg.getLayoutParams();
+                params.height = 42;
+                box.setTextSize(18);
+                if(devicerole.equals("USER")){
+                    ((TextView) findViewById(R.id.username)).setText(servername);
+                }
+                if(devicerole.equals("SERVER")){
+                    ((TextView) findViewById(R.id.username)).setText(username);
+                }
+                layoutMove(((TextView) findViewById(R.id.leftSpacer)));
+                color= R.drawable.received_message;
+            }else
+            {
+                //reestablece cabecera de usuario
+                msg.setTextColor(getResources().getColor(R.color.system));
+                box.setTextSize(15);
+                LayoutParams params = (LayoutParams) msg.getLayoutParams();
+                params.height = 41;
+                ((TextView) findViewById(R.id.username)).setText("Sistema");
+                ((TextView) findViewById(R.id.msgDate)).setLayoutParams(new LinearLayout.LayoutParams(0, 0));
+                color= R.drawable.message_infobox;
+            }
+
+            ((LinearLayout)findViewById(R.id.messageLayout)).setBackgroundResource(color);
+        }
+        private void layoutMove(TextView tv)//Mueve los mensajes a izquierda/derecha
+        {
+            ViewGroup.LayoutParams lp=tv.getLayoutParams();
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(lp.width, lp.height);
+            params.weight = 0f;
+            tv.setLayoutParams(params);
+        }
+
+    }
+    //>>>>>>NETWORK/HILOS<<<<<<
+    //destruir conexión, notificar, limpiar, volver al menú (ESPECIFICAR EN ONDESTROY)
+    private void destroyNetwork(){
+        //Limpiar sockets
+        goodtogo=false;
+        try {
+            if(dataInputStream!=null) {
+                dataInputStream.close();
+                }
+        }
+        catch(Exception e){}
+        try {
+            if (dataOutputStream != null) {
+                dataOutputStream.close();
+            }
+        }
+        catch(Exception e){}
+        try {
+            if(socket!=null)  {
+                socket.close();
+            }
+        }
+        catch(Exception e){}
+                dataOutputStream=null;
+                socket=null;
+                dataInputStream=null;
+        //THREAD KILL (POR HACER)
+        if(HiloEscucha!=null)
+        {
+            HiloEscucha.engine=false;
+            HiloEscucha.interrupt();
+            HiloEscucha=null;
+        }
+    }
+    //ENVIO DE MENSAJES POR RED
     private class SocketMessage extends Thread
     {
-        private boolean mostrar_mensaje_enviado;
+        private boolean abletoshow; //SE ESPECIFICA SI SE MUESTRA O NO, POR SI SE MANDA UN MENSAJE DE SALIDA
         private String msg;
 
         SocketMessage(String message, boolean show_msg)
         {
             msg=message;
-            mostrar_mensaje_enviado=show_msg;
+            abletoshow=show_msg;
         }
 
         @Override
@@ -223,107 +311,84 @@ public class NetCode extends AppCompatActivity {
         {
             try
             {
-                dataOutputStream.writeUTF(msg);//Enviamos el mensaje
-                //dataOutputStream.close();
-                if(mostrar_mensaje_enviado)
+                dataOutputStream.writeUTF(msg);//ENVIO DE MENSAJE POR RED
+                if(abletoshow)
                 {
                     String[] trozos=msg.split("#");
-                    if(trozos.length>1)
+                    if(trozos.length>1 && Integer.parseInt(trozos[0])==2)
                     {
-                        switch (Integer.parseInt(trozos[0]))
-                        {
-                            case 3:
-                            {
-                                msgrole = "SELF";
-                                new newMessage(trozos[1]).start();//Añadimos el mensaje a la interfaz
-                            }break;
-                        }
+                        msgrole = "SELF"; //El mensaje que mandamos se va a pasar a pantalla
+                        new newMessage(trozos[1]).start();//MENSAJE A LAYOUT
                     }
                 }
             }catch (IOException e)
             {
-                e.printStackTrace();
-                //message += "¡Algo fue mal! " + e.toString() + "\n";
+                //Punto de debug
+                //MENSAJE DE ERROR EN LA INTERFAZ? por hacer...
             }
         }
     }
-    //HILOS DE EJECUCION
+    //HILOS DE DE EJECUCION
     //HILO DE ESCUCHA COMUN
     private class MessageRefresher extends Thread
     {
-        public boolean executing;
+        public boolean engine;
         Socket socket;
         private String buffer;
-
 
         MessageRefresher(Socket s){socket=s;}
 
         public void run()
         {
-            executing=true;
+            engine=true;
             //añadido
             try {
                 dataInputStream = new DataInputStream(socket.getInputStream());//Creamos el inputstream
-            }catch(Exception e){ Log.d("Error DatainputStream", "jejeje"); e.printStackTrace();}
-
-
-            while(executing)
+            }catch(Exception e){
+                //Punto de debug
+            }
+            while(engine)
             {
                 buffer="";
-                buffer=ObtenerCadena();//Obtenemos la cadena del buffer
-                if(buffer!="" && buffer.length()!=0) {//Comprobamos que esa cadena tenga contenido
-                    ProcessMessage();//Procesamos la cadena recibida
+                buffer=getMsgString();//preparar string para split
+                if(buffer!="" && buffer.length()!=0) {//el string no está vacio
+                    ProcessMessage();//procesar string de buffer de entrada
                 }
             }
         }
-
         private void ProcessMessage() {
-            //procesar cadena, incluir metodos faltantes segun rol
-            String[] trozos = buffer.split("#");//Dividimos la cadena para saber que tipo de mensaje es
-            if (trozos.length > 1) {
-                //Log.d("Trozos", ""+trozos.length);
-                switch (Integer.parseInt(trozos[0])) {
+            //obtener y tratar buffer de mensaje
+            String[] splitter = buffer.split("#");//dividir el mensaje (cabecera/mensaje)
+            if (splitter.length > 1) {
+                switch (Integer.parseInt(splitter[0])) {
                     case 0://nameserver
                     {
-                        if (devicerole.equals("CLIENT")) {
-                            servername = trozos[1];
+                        if (devicerole.equals("USER")) {
+                            servername = splitter[1];
                         }
                     }
                     break;
                     case 1://username
                     {
                         if (devicerole.equals("SERVER")) {
-                            NewClients.UserName = trozos[1];
+                            NewClients.UserName = splitter[1];
                         }
                     }
                     break;
-                    case 2://connection answer
-                    {
-                        if (devicerole.equals("CLIENT")) {
-                            ClientStart.respuesta = Integer.parseInt(trozos[1]);//Notificamos al hilo de conexion la respuesta del servidor
-                        }
-                    }
-                    break;
-                    case 3://normalmessage
+                    case 2://normalmessage
                     {
                         msgrole = "OTHER";
-                        new newMessage(trozos[1]).start();
+                        new newMessage(splitter[1]).start();
                     }
                     break;
-                    case 4://discon. message
+                    case 3://discon. message
                     {
                         if (devicerole.equals("SERVER")) {
-                            new ShowMessageInfo("Se ha desconectado " + trozos[1] + " :(").run();//Añadimos el mensaje a la interfaz, que se ha desconectado
-
-                            //Cerramos el hilo de escucha, así como los sockets y streams
-                            //CerrarHiloEscucha();
-                            //CloseSocketInputs();
+                            new ShowMessageInfo("Se ha desconectado " + splitter[1] + " :(").run();
                         }
                         if (devicerole.equals("CLIENT")) {
-                            new ShowMessageInfo("Se ha desconectado " + trozos[1] + " :(").run();
-                            //ReiniciarConexion();
+                            new ShowMessageInfo("Se ha desconectado " + splitter[1] + " :(").run();
                         }
-
                     }
                     break;
                     default:
@@ -331,145 +396,79 @@ public class NetCode extends AppCompatActivity {
                 }
             }
         }
-
-        private String ObtenerCadena()
+        private String getMsgString()
         {
-            String cadena="";
-
+            String buffer="";
             try {
-                cadena=dataInputStream.readUTF();//Leemos del datainputStream una cadena UTF
-
+                buffer=dataInputStream.readUTF();//Leemos del datainputStream una cadena UTF
             }catch(Exception e)
             {
-                e.printStackTrace();
+                //Punto de debug
             }
-            return cadena;
-        }
-    }
-
-
-    //Thread Kill
-    private void killRefresher()
-    {
-        if(HiloEscucha!=null)
-        {
-            HiloEscucha.executing=false;
-            HiloEscucha.interrupt();
-            HiloEscucha=null;
+            return buffer;
         }
     }
     //HILO DE CLIENTE
     private class ClientStartup extends Thread
     {
-        int respuesta;
         public void run()
         {
-            //changeTitle("Esperando Servidor...");
-            respuesta=-1;
             try
             {
-                new ShowMessageInfo("Creando el socket...").start();//Mostramos un mensaje para indicar que estamos creando el socket
-                socket = new Socket(ip, Integer.parseInt(netport));//Creamos el socket
-
-
-                new ShowMessageInfo("Conectando con el servidor: "+ip+":"+netport+"...").start();//Mostramos por la interfaz que nos hemos conectado al servidor
-
-                (HiloEscucha=new MessageRefresher(socket)).start();//Creamos el hilol de escucha de mensajes
-                dataOutputStream= new DataOutputStream(socket.getOutputStream());//Iniciamos el dataoutputstream
-
-                while(servername.length()<1){}//Esperamos a que el servidor nos envie su nombre
-
-                //Añadimos un mensaje a la interfaz indicando que estamos pidiendo autorización en el servidor
-                //new ShowMessageInfo("Pidiendo a utorización para entrar al servidor: '"+servername+"'").start();
-
-                //Le enviamos al servidor nuestro nombre, para que pueda aceptarnos o rechazarnos jejeje
-                SocketMessage sendNameUser;
-                sendNameUser=new SocketMessage("1#"+username, true);
-                sendNameUser.start();
-
-                while(respuesta==-1){}//Esperamos la respuesta
-
-
-                if(respuesta==1)
-                {//Si nos han aceptado, mostramos un mensaje afirmativo, en caso contrario, el mensaje será negativo :(
-                    //changeTitle(ServerName);
-                    new ShowMessageInfo("Has entrado al servidor: '"+servername+"', ya puedes hablar todo lo que quieras").start();
-                    getStatus(true);
-                }else
-                {
-                    //changeTitle("RECHAZADO HIJOPUTA");
-                    getStatus(false);
-                    new ShowMessageInfo("Te han denegado la entrada al servidor: '"+servername+"'").start();
-                }
+                socket = new Socket(ip, Integer.parseInt(netport));//Preparacion de socket
+                (HiloEscucha=new MessageRefresher(socket)).start();//Hilo de entrada de mensajes
+                new ShowMessageInfo("Conectando a: "+ip+""+netport).start();//Conexion exitosa (mensaje a layout)
+                dataOutputStream= new DataOutputStream(socket.getOutputStream());//preparar dataoutput
+                while(servername.length()<1){}//OBTENIENDO NOMBRE DEL SERVER / MOMENTO CRITICO, PODRÍA PARARSE
+                SocketMessage sendusername;
+                sendusername=new SocketMessage("1#"+username, true);
+                sendusername.start();
+                new ShowMessageInfo("Conexion establecida con: \n '"+servername+"'").start(); //Mensaje de confirmacion a interfaz
+                getStatus(true); //se habilita la escritura
             } catch (IOException e) {
-                e.printStackTrace();
+                new ShowMessageInfo("No se ha podido conectar a "+ip+"").start();
+                getStatus(false);
+                //INSERTAR METODO NETWORKDESTROY...
             }
         }
     }
     //HILO DE SERVER
     private class ClientAwaitThread extends Thread
     {
-        public boolean esperando_nuevos_clientes;
-        String UserName;
-
+        public boolean waiting;
+        String UserName = "";
         public void run()
         {
-            //changeTitle("Esperando Usuario...");
-            esperando_nuevos_clientes=true;
+            waiting=true;
             try
             {
-                new ShowMessageInfo("Ahora eres el server...").start();
-                //Abrimos el socket
-                serverSocket = new ServerSocket(Integer.parseInt(netport));
-
-                //Mostramos un mensaje para indicar que estamos esperando en la direccion ip y el puerto...
-               //ESPERAR INTENT SERGIO!!! OBTENER SELF IP new ShowMessageInfo("Creado el servidor\n Dirección: "+getIpAddress()+"\nPuerto: "+serverSocket.getLocalPort()).start();
-
-
-                //Bucle para dejar al servidor a la escucha de clientes
-                while (esperando_nuevos_clientes)
+                new ShowMessageInfo("Servidor iniciado...").start();//El server escucha correctamente
+                serverSocket = new ServerSocket(Integer.parseInt(netport)); //socket de server en el puerto especificado
+                while (waiting)
                 {
-                    //Creamos un socket que esta a la espera de una conexion de cliente
-                    Socket socket = serverSocket.accept();
-
-
-                    //Una vez hay conexion con un cliente, creamos los streams de salida/entrada
+                    Socket socket = serverSocket.accept();//Streams
                     try {
                         dataInputStream = new DataInputStream(socket.getInputStream());
                         dataOutputStream = new DataOutputStream(socket.getOutputStream());
-                    }catch(Exception e){ e.printStackTrace();}
-
-
-                    //Iniciamos el hilo para la escucha y procesado de mensajes
-                    (HiloEscucha=new MessageRefresher(socket)).start();
-
-                    //Creamos un mensaje en la interfaz indicando que hemos encontrado un nuevo usuario
-                    new ShowMessageInfo("Se ha encontrado un nuevo usuario, esperando nombre de usuario...").start();
-
-                    //Enviamos al usuario el nombre del servidor
-                    SocketMessage sendNameServer;
-                    sendNameServer=new SocketMessage("0#"+username, false);
-                    sendNameServer.run();
-
-                    UserName="";//Esperamos a que el usuario nos envie su nombre
-                    while(UserName.length()<1){}
-
-                    //changeTitle(UserName);//Ponemos el nombre de usuario como titulo
-                        //Mostramos un mensaje indicando que hemos aceptado al usuario
-                        new ShowMessageInfo("Has aceptado a '"+UserName+"', ya puedes hablar con él jeje").start();
-
-                        //Notificamos al usuario que se ha aceptado la conexion
-                        SocketMessage enviarmensaje;
-                        enviarmensaje=new SocketMessage("2#1", true);
-                        enviarmensaje.run();
-
-                        esperando_nuevos_clientes=false;
-                        getStatus(true);
+                    }catch(Exception e){
+                        //Punto de debug...
+                        }
+                    (HiloEscucha=new MessageRefresher(socket)).start();//escucha de mensajes
+                    new ShowMessageInfo("Nueva conexión entrante...").start();//intento de entrada de usuario
+                    SocketMessage sendservername; //envío de nombre de server a cliente
+                    sendservername=new SocketMessage("0#"+servername, false);
+                    sendservername.run();
+                    while(UserName.length()<1){}//OBTENIENDO NOMBRE DEL SERVER / MOMENTO CRITICO, PODRÍA PARARSE
+                    new ShowMessageInfo("'"+UserName+"' ha entrado al chat").start(); //El usuario ha establecido conexión
+                    username = UserName; //Carga de variable local a global para tratar el nombre en la interfaz
+                    //Notificamos al usuario que se ha aceptado la conexion
+                    waiting=false;
+                    getStatus(true);
                 }
             }
             catch (IOException e)
             {
-                e.printStackTrace();
+                //Punto de debug
             }
         }
     }

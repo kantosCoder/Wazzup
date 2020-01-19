@@ -11,35 +11,43 @@
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceSmall"
         android:text=""
-        android:id="@+id/MensajeHuecoIzquierda" />
+        android:id="@+id/leftSpacer" />
     <LinearLayout
         android:orientation="vertical"
         android:layout_weight="8"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:id="@+id/MensajeLinearLayout"
+        android:id="@+id/messageLayout"
 
         android:padding="5dp"
         >
-        <ImageView
-            android:layout_width="match_parent"
-            android:scaleType="fitCenter"
-            android:adjustViewBounds="true"
-            android:layout_height="150dp"
-            android:id="@+id/MensajeImagen" />
+
         <TextView
+            android:id="@+id/username"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit."
-            android:id="@+id/MensajeTextoCentral" />
-        <TextView
-            android:gravity="right"
+            android:layout_height="1dp"
+            android:gravity="left"
+            android:text="DefaultUser"
             android:textAlignment="gravity"
+            android:textColor="#111010"
+            android:textSize="13sp" />
+
+        <TextView
+            android:id="@+id/mainbox"
+            android:layout_width="261dp"
+            android:layout_height="wrap_content"
+            android:text="Deadlights jack lad schooner scallywag dance the hempen jig  "
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:textColor="#E94B4A4A" />
+
+        <TextView
+            android:id="@+id/msgDate"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:gravity="right"
             android:text="17:14"
-            android:id="@+id/MensajeHora" />
+            android:textAlignment="gravity"
+            android:textSize="10sp" />
     </LinearLayout>
     <TextView
         android:layout_weight="2"
@@ -47,5 +55,5 @@
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceSmall"
         android:text=""
-        android:id="@+id/MensajeHuecoDerecha" />
+        android:id="@+id/rigthSpacer" />
 </LinearLayout>
